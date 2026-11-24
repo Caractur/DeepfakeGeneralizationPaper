@@ -1,0 +1,41 @@
+# Environment "dfref" (Python 3.10 + dlib from conda-forge): REFace generation.
+# Exact versions used on the main machine. Install with:  python env/install.py reface
+--extra-index-url https://download.pytorch.org/whl/cu117
+torch==1.13.1+cu117
+torchvision==0.14.1+cu117
+pytorch_lightning==1.4.2
+torchmetrics==0.6.0
+transformers==4.19.2
+tokenizers==0.12.1
+huggingface_hub==0.36.2
+diffusers==0.30.3
+albumentations==1.1.0
+bezier==2023.7.28
+dift==0.0.7
+einops==0.4.1
+face_alignment==1.4.1
+ftfy==6.0.3
+imageio==2.14.1
+invisible_watermark==0.2.0
+kornia==0.6.0
+matplotlib==3.7.5
+more_itertools==10.5.0
+natsort==8.4.0
+numpy==1.24.3
+omegaconf==2.1.1
+opencv-python==4.11.0.86
+packaging==24.1
+pandas==2.0.3
+Pillow==9.0.1
+PyYAML==6.0.2
+regex==2024.9.11
+requests==2.32.3
+scipy==1.9.1
+setuptools==59.5.0
+scikit-image==0.20.0
+tqdm==4.66.5
+typing_extensions==4.12.2
+taming-transformers-rom1504==0.0.6
+wandb==0.31.0
+flask
+clip @ git+https://github.com/openai/CLIP.git@d05afc436d78f1c48dc0dbf8e5980a9d471f35f6

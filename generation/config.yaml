@@ -1,0 +1,93 @@
+# rerun_multigen settings. Everything needed to regenerate the fakes and repeat the experiments.
+# Hugging Face revisions are pinned to exact commit hashes.
+
+split_seed: 42                  # splits reused from rerun_matched (connected FF++ components, 70/15/15)
+final_jpeg_quality: 95          # shared final step for every image (PIL encoder, 4:2:0)
+
+mask:                           # one face mask per real frame, shared by all generators
+  detector: mediapipe FaceDetection full-range, conf>=0.5, highest score (same as the crop recipe)
+  landmarks: mediapipe FaceMesh (static, up to 4 faces; the face inside the detection box)
+  region: convex hull of the 468 landmarks
+  dilate_frac: 0.08             # dilation radius = 8% of the face-box size
+  feather_sigma_frac: 0.04      # Gaussian feather sigma = 4% of the face-box size
+  alpha_floor: 0.004            # alpha < 1/255 set to 0, so pixels outside the mask stay byte-identical
+  inpaint_extra_sigmas: 3       # the model's inpaint mask = hull dilated by 3 feather sigmas (covers the feather)
+
+work_crop:
+  scale: 3.0                    # square side = 3.0 x face size (Gate 2: 2.0 gave SD15 face-mask/net artefacts in 26-40% of faces)
+  resample: lanczos
+
+crop:                           # face crops for the detectors (recipe of rerun_matched/code/02_crop.py)
+  box_scale: 1.02
+  crop_scale: 1.5
+  jpeg_quality: 95
+  shared_box: true              # diffusion fakes reuse the box detected on their real frame
+
+prompts:                        # v1 = the paper's notebook; v2 = tested at Gate 2 (pilot showed face-mask / net artefacts with v1)
+  v1:
+    prompt: "a realistic photo of a person, high quality, sharp focus"
+    negative: "cartoon, anime, drawing, deformed, extra eyes, blurry, low quality, watermark, text"
+  v2:
+    prompt: "a realistic close-up photo of a person's face, natural skin, eyes, nose and mouth visible, high quality, sharp focus"
+    negative: "cartoon, anime, drawing, deformed, extra eyes, blurry, low quality, watermark, text, face mask, mask, covering, veil, net, mesh, pattern, back of head"
+prompt_set: v2                  # Gate 2 decision (2026-10-22): v2 + 3.0x work crop; see README Gate 2
+seed_rule: "1000 * video_id + frame_id; retry k uses seed + 1000003 * k"
+qc:                             # code/qc.py: MediaPipe face score >= 0.5 and CLIP P(face) >= 0.5 on the face crop
+  enabled: true
+  max_attempts: 4
+
+generators:
+  SD15:
+    family: diffusion
+    model: runwayml/stable-diffusion-inpainting
+    revision: 8a4288a76071f7280aedbdb3253bdb9e9d5d84bb
+    resolution: 512
+    steps: 28
+    guidance: 7.5
+    strength: 1.0
+  SDXL:
+    family: diffusion
+    model: diffusers/stable-diffusion-xl-1.0-inpainting-0.1
+    revision: 115134f363124c53c7d878647567d04daf26e41e
+    vae: madebyollin/sdxl-vae-fp16-fix
+    vae_revision: 207b116dae70ace3637169f1ddd2434b91b3a8cd
+    resolution: 768             # Gate 2: 1024 took 16 s/img (> 12 s rule), 768 takes 9.3 s/img
+    steps: 28
+    guidance: 7.5
+    strength: 0.99              # model card: strength 1.0 degrades quality
+  K22:
+    family: diffusion
+    model: kandinsky-community/kandinsky-2-2-decoder-inpaint
+    revision: db790ad5cbcabed886f069ef2710774657621702
+    prior: kandinsky-community/kandinsky-2-2-prior
+    prior_revision: 9fc51ad5732afc5d031724219d22e6c42179c5a8
+    resolution: 768
+    steps: 28
+    guidance: 4.0               # Kandinsky 2.2 default (7.5 is the SD default and oversaturates K22)
+    prior_guidance: 4.0
+    prior_steps: 25
+    strength: 1.0
+    prompt_set: v1              # Gate 2: v2 (close-up) makes the K22 prior paint giant mouths/noses
+    conditioning: interp_full   # Gate 2: text-only prior collapses to one stylized man; image embedding of
+    context_weight: 0.8         #   the unedited work crop (0.8) + text (0.2) gives plausible, varied faces
+  RESAMPLE:
+    family: control             # no generation: work crop resized to 512 and back, pasted with the same mask
+    resolution: 512
+  DF:   {family: ffpp_swap, source: Deepfakes}
+  FS:   {family: ffpp_swap, source: FaceSwap}
+  FSh:  {family: ffpp_swap, source: FaceShifter}
+  F2F:  {family: ffpp_reenact, source: Face2Face}
+  NT:   {family: ffpp_reenact, source: NeuralTextures}
+
+ffpp_kaggle: fatimahirshad/faceforensics-extracted-dataset-c23   # CC BY-NC 4.0
+
+families:                       # used for the within- vs cross-family contrast (B2)
+  ffpp: [DF, FS, FSh]
+  diffusion: [SD15, SDXL, K22]
+
+detectors:
+  xception:     {size: 299, epochs: 8,  bs: 16, lr: 3.0e-4, wd: 1.0e-4}
+  dinov2:       {size: 224, epochs: 10, bs: 16, lr: 5.0e-4, wd: 0.01}   # frozen ViT-S/14 CLS + linear head
+  dinov2_patch: {size: 224, epochs: 10, bs: 16, lr: 5.0e-4, wd: 0.01}   # mean of patch tokens
+  clip:         {size: 224, epochs: 10, bs: 16, lr: 5.0e-4, wd: 0.01, model: openai/clip-vit-large-patch14, revision: 32bd64288804d66eefd0ccbe215aa642df71cc41}
+  dinov2_ft:    {size: 224, epochs: 8,  bs: 16, lr: 5.0e-4, lr_backbone: 1.0e-5, wd: 0.01, unfrozen_blocks: 4}

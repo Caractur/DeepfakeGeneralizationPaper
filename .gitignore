@@ -1,0 +1,4 @@
+# everything a helper downloads or generates stays out of git
+generation/work/
+__pycache__/
+*.pyc
