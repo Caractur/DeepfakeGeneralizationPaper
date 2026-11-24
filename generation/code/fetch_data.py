@@ -19,9 +19,17 @@ PREFIX = "FF++C32-Frames/Original/"
 
 def download(dst):
     import requests
+    # Kaggle answers 404 to Python's default user agent; it redirects browsers/curl to a signed storage URL,
+    # which is then downloaded directly (with Range requests, so an interrupted download resumes).
+    ua = {"User-Agent": "Mozilla/5.0"}
+    r0 = requests.get(URL, headers=ua, allow_redirects=False, timeout=60)
+    if r0.status_code not in (301, 302, 303, 307, 308) or "Location" not in r0.headers:
+        sys.exit(f"Download failed (HTTP {r0.status_code}). Download the zip in a browser (see the top of this file) "
+                 f"and rerun with --zip <path>.")
+    url = r0.headers["Location"]
     have = os.path.getsize(dst) if os.path.exists(dst) else 0
-    headers = {"Range": f"bytes={have}-"} if have else {}
-    with requests.get(URL, headers=headers, stream=True, timeout=120, allow_redirects=True) as r:
+    headers = dict(ua, **({"Range": f"bytes={have}-"} if have else {}))
+    with requests.get(url, headers=headers, stream=True, timeout=120) as r:
         if r.status_code == 416:            # already complete
             return
         if r.status_code not in (200, 206):

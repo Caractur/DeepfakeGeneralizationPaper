@@ -9,7 +9,7 @@
 Resumable: finished steps are skipped.
 """
 import os, sys, shutil, subprocess
-from common import WORK
+from common import WORK, hf_download
 
 REPO, COMMIT = "https://github.com/Sanoojan/REFace.git", "f73bd8d4ad5a2ca362d294982e6f381d83e58e62"
 WEIGHTS_REV = "514ebf4560c1b8cc68eda6b58043e656ac7feb55"
@@ -25,12 +25,11 @@ def run(*cmd, cwd=None):
 
 
 def main():
-    from huggingface_hub import snapshot_download
     if not os.path.isdir(os.path.join(REFACE, ".git")):
         run("git", "clone", REPO, REFACE)
     run("git", "checkout", "-q", COMMIT, cwd=REFACE)
     print("Downloading REFace weights (~6.5 GB) ...", flush=True)
-    snapshot_download("Sanoojan/REFace", revision=WEIGHTS_REV, local_dir=WEIGHTS)
+    hf_download("Sanoojan/REFace", WEIGHTS_REV, local_dir=WEIGHTS)
     src = os.path.join(WEIGHTS, "Other_dependencies")
     for sub in os.listdir(src):
         os.makedirs(os.path.join(REFACE, "Other_dependencies", sub), exist_ok=True)
@@ -39,8 +38,8 @@ def main():
             if not os.path.exists(dst):
                 shutil.copy2(os.path.join(src, sub, f), dst)
     print("Downloading CLIP ViT-L/14 ...", flush=True)
-    snapshot_download("openai/clip-vit-large-patch14", revision=CLIP_REV,
-                      allow_patterns=["*.json", "*.txt", "pytorch_model.bin"], local_dir=CLIP)
+    hf_download("openai/clip-vit-large-patch14", CLIP_REV,
+                allow_patterns=["*.json", "*.txt", "pytorch_model.bin"], local_dir=CLIP)
     run(sys.executable, "-m", "pip", "install", "-q", "-e", REFACE, "--no-deps")
     for f in ["last.ckpt"]:
         assert os.path.exists(os.path.join(WEIGHTS, f)), f"missing {f}"

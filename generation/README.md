@@ -63,7 +63,7 @@ python code/setup_reface.py
 ```
 
 `install.py` must print `OK  torch 1.13.1+cu117 | CUDA available: True ...`; `setup_reface.py` downloads about
-8 GB and must end with `OK: REFace is set up.`
+8 GB (broken connections are retried; if it stops anyway, run it again) and must end with `OK: REFace is set up.`
 
 All commands below are run from the `generation` folder.
 
@@ -88,9 +88,18 @@ About 5–10 minutes on the CPU. It ends with a comparison line like
 `same face found/not found 100.00%, identical face box 100.00%, identical mask pixels 100.00%` and `OK`.
 Copy that line into your message to the main author. If it prints a WARNING instead, stop and send the line.
 
+## Step 2b — Download the models (dfgen)
+
+```bash
+python code/download_models.py
+```
+
+About 14 GB (Kandinsky 2.2 and CLIP, at the exact versions in `config.yaml`). Broken connections are retried
+automatically; if it still stops, run it again and it continues. It must end with `OK: all models downloaded.`
+
 ## Step 3 — Generate K22 (dfgen)
 
-First a 2-frame test (downloads ~14 GB of models the first time):
+First a 2-frame test:
 
 ```bash
 python code/generate.py --gen K22 --shard shards/K22_shardN.txt --limit 2

@@ -79,3 +79,16 @@ def read_shard(path):
     """A shard file lists one frame name per line (comments start with #)."""
     with open(path, encoding="utf8") as f:
         return [l.strip() for l in f if l.strip() and not l.startswith("#")]
+
+
+def hf_download(repo_id, revision, retries=30, **kw):
+    """snapshot_download that survives broken connections: partial files are resumed on each retry."""
+    import time
+    from huggingface_hub import snapshot_download
+    for attempt in range(1, retries + 1):
+        try:
+            return snapshot_download(repo_id, revision=revision, **kw)
+        except Exception as e:
+            print(f"  download interrupted ({type(e).__name__}); retry {attempt}/{retries} in 15 s ...", flush=True)
+            time.sleep(15)
+    raise RuntimeError(f"could not download {repo_id} after {retries} attempts; check the internet connection and rerun")
