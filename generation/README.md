@@ -2,7 +2,7 @@
 
 You are generating part of the deepfake images for the study. The work is split into **shards**: lists of
 video frames. You run two generators on your own shard and send the results back to the main author, who merges
-everything and runs all checks and training. Your part is about **12–14 hours of unattended GPU time** on a
+everything and runs all checks and training. Your part is about **14 hours of unattended GPU time** on a
 laptop RTX 4070 (less on a faster card), plus about an hour of setup.
 
 Your shards are listed in [ASSIGNMENTS.md](ASSIGNMENTS.md).
@@ -10,7 +10,7 @@ Your shards are listed in [ASSIGNMENTS.md](ASSIGNMENTS.md).
 | Generator | What it does | Your shard | Time on an RTX 4070 laptop |
 |---|---|---|---|
 | **K22**: Kandinsky 2.2 inpainting | repaints the face in a real frame | ~1,351 frames | ~5.5 h (≈15 s/frame) |
-| **REF**: REFace face swap | puts the face of video *s* into the scene of video *t* | ~1,414 frames | ~6.5 h (≈17 s/frame) |
+| **REF**: REFace face swap | puts the face of video *s* into the scene of video *t* | ~1,414 frames | ~8 h (≈20 s/frame) |
 
 Everything is pinned (model versions, prompts, seeds, settings in `config.yaml`), so do not change any setting.
 
@@ -21,7 +21,7 @@ Everything is pinned (model versions, prompts, seeds, settings in `config.yaml`)
 - **An NVIDIA GPU with at least 8 GB of memory** and a recent driver. Both generators were tested on 8 GB.
   - REFace needs PyTorch 1.13, which does **not** run on RTX 50-series (Blackwell) cards. If you have one, tell the
     main author: you will get only K22 work, with a newer PyTorch (see Troubleshooting).
-- **About 50 GB of free disk** (models ~25 GB, two Python environments ~15 GB, data ~5 GB temporarily).
+- **About 50 GB of free disk** (models ~26 GB, two Python environments ~12 GB, data ~5 GB temporarily).
   If your system drive is small, set the environment variable `HF_HOME` to a folder on a bigger drive before
   starting; the models are downloaded there.
 - **Miniconda** (https://docs.conda.io/en/latest/miniconda.html) and **git**.
@@ -94,7 +94,7 @@ Copy that line into your message to the main author. If it prints a WARNING inst
 python code/download_models.py
 ```
 
-About 14 GB (Kandinsky 2.2 and CLIP, at the exact versions in `config.yaml`). Broken connections are retried
+About 17 GB (Kandinsky 2.2 and CLIP, at the exact versions in `config.yaml`). Broken connections are retried
 automatically; if it still stops, run it again and it continues. It must end with `OK: all models downloaded.`
 
 ## Step 3 — Generate K22 (dfgen)
@@ -134,7 +134,7 @@ python code/check_shard.py --gen REF --shard shards/REF_shardN.txt
 ```
 
 Each command checks that every frame of the shard is done and every image is valid, prints a summary, and writes a
-zip to `work/return/` (about 200–400 MB each). It prints a `SHA-256` line for each zip.
+zip to `work/return/` (about 270 MB for a K22 shard, 130 MB for a REF shard). It prints a `SHA-256` line for each zip.
 
 Send to the main author:
 1. the two zips, through a **private** shared folder (OneDrive / Google Drive / Dropbox shared only with the main

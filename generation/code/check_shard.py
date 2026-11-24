@@ -61,7 +61,7 @@ def main():
         print(f"PROBLEMS ({len(problems)}):"); [print("  " + p) for p in problems[:20]]
         if not a.allow_incomplete:
             sys.exit("Not packed. Finish the shard (rerun the same generate command; it resumes) or use --allow_incomplete.")
-    zpath = os.path.join(RETURN, f"{a.gen}_{shard}.zip")
+    zpath = os.path.join(RETURN, f"{shard}.zip")
     with zipfile.ZipFile(zpath, "w", zipfile.ZIP_STORED) as z:
         for p in images:
             z.write(p, f"{a.gen}/{os.path.basename(p)}")

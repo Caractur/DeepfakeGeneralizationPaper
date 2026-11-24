@@ -1,4 +1,4 @@
-"""Step 2b - Download the models for K22 generation and the quality check (~14 GB, dfgen environment).
+"""Step 2b - Download the models for K22 generation and the quality check (~17 GB, dfgen environment).
 
 Kandinsky 2.2 inpainting decoder + prior and CLIP ViT-L/14, at the exact revisions in config.yaml, into the
 Hugging Face cache (set HF_HOME first to put it on another drive). Interrupted downloads resume automatically;

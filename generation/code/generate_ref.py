@@ -114,7 +114,9 @@ class REFace:
 def paste(frame_rgb, out512, tmask1024, inv, fs):
     H, W = frame_rgb.shape[:2]
     gen = np.array(out512.resize((1024, 1024), Image.BILINEAR).transform((W, H), Image.PERSPECTIVE, inv, Image.BILINEAR))
-    hard = np.array(Image.fromarray(tmask1024).transform((W, H), Image.PERSPECTIVE, inv, Image.NEAREST)) > 127
+    # the face parser returns a 512 px mask; the alignment transform is defined on the 1024 px crop
+    tm = Image.fromarray(tmask1024).resize((1024, 1024), Image.NEAREST)
+    hard = np.array(tm.transform((W, H), Image.PERSPECTIVE, inv, Image.NEAREST)) > 127
     mc = CONF["mask"]
     alpha = cv2.GaussianBlur(hard.astype(np.float32), (0, 0), mc["feather_sigma_frac"] * fs)
     alpha[alpha < mc["alpha_floor"]] = 0
